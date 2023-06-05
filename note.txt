@@ -1,0 +1,1 @@
+{"pair": "{{ticker}}", "side": "SELL"} data model ntif

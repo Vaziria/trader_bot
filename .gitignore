@@ -1,0 +1,6 @@
+.venv
+app.log
+app.log.*
+BOTLOG.txt
+Config_test.json
+config.json
