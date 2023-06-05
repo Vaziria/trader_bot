@@ -277,7 +277,7 @@ class Botser:
                             except:
                                 pass
 
-                        if qty > self.qtyFilter[symbol]:
+                        if qty > self.qtyFilter[symbol]: # untuk jual asset
                             orderId = self.client.order_limit_sell(symbol=symbol, quantity=qty, price=sPrice, recvWindow=59990)['orderId']
 
                             last_order = self.client.get_order(symbol=symbol, orderId=orderId)

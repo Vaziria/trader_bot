@@ -1,14 +1,16 @@
 from binance.client import AsyncClient
-from .binance_model import *
+from .models.binance_model import *
+from .models.exchange_model import *
 
 from pydantic import parse_obj_as
+
 
 
 class BinanceAccount:
     public_api: str
     private_api: str
     client: AsyncClient
-    
+
     def __init__(self, public_api: str, private_api: str):
         self.public_api = public_api
         self.private_api = private_api
@@ -36,15 +38,15 @@ class BinanceAccount:
         return Order.parse_obj(data)
 
     async def create_order(self):
-        pass
+        await self.client.cancel_order()
 
     async def order_market_buy(self, symbol: str, quoteOrderQty: int, recvWindow: int = 59990):
         data = await self.client.order_market_buy(symbol=symbol, quoteOrderQty=quoteOrderQty, recvWindow=recvWindow)
         return PlaceOrderMarketBuy.parse_obj(data)
 
-    async def get_exchange_info(self):
+    async def get_exchange_info(self) -> ExchangeInfo:
         data = await self.client.get_exchange_info()
-        print(data)
+        return ExchangeInfo.parse_obj(data)
 
 
     
@@ -54,7 +56,10 @@ class BinanceAccount:
 
 if __name__ == '__main__':
     import asyncio
+    
     from .config import get_config
+
+    loop = asyncio.get_event_loop()
 
     async def main():
 
@@ -64,7 +69,12 @@ if __name__ == '__main__':
 
         await account.get_exchange_info()
 
+        await account.client.close_connection()
+
+        # await account.get_exchange_info()
+
+        # await account.client.close_connection()
 
 
-    asyncio.run(main())
+    loop.run_until_complete(main())
 
