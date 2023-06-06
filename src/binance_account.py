@@ -1,22 +1,22 @@
 from binance.client import AsyncClient
 from .models.binance_model import *
 from .models.exchange_model import *
+from .config import Config
+from .dependencies import get_dependency
 
 from pydantic import parse_obj_as
 
 
 
 class BinanceAccount:
-    public_api: str
-    private_api: str
     client: AsyncClient
 
-    def __init__(self, public_api: str, private_api: str):
-        self.public_api = public_api
-        self.private_api = private_api
-
-    async def create(self):
-        self.client = await AsyncClient.create()
+    @classmethod
+    async def create(cls):
+        cfg = await get_dependency(Config)
+        obj: BinanceAccount = cls()
+        obj.client = await AsyncClient.create(cfg.public_api, cfg.private_api)
+        return obj
 
     async def get_open_orders(self, symbol: str, recvWindow: int=59990) -> List[Order]:
         data = await self.client.get_open_orders(symbol =symbol, recvWindow=recvWindow)
@@ -30,8 +30,8 @@ class BinanceAccount:
         data = await self.client.cancel_order(**params)
         return CancelOrder.parse_obj(data)
 
-    async def order_limit_sell(self):
-        pass
+    # async def order_limit_sell(self):
+    #     orderId = self.client.order_limit_sell(symbol=symbol, quantity=qty, price=sPrice, recvWindow=59990)['orderId']
 
     async def get_order(self, symbol: str, orderId: int) -> Order:
         data = await self.client.get_order(symbol=symbol, orderId=orderId)
@@ -40,15 +40,19 @@ class BinanceAccount:
     async def create_order(self):
         await self.client.cancel_order()
 
-    async def order_market_buy(self, symbol: str, quoteOrderQty: int, recvWindow: int = 59990):
+    async def order_market_buy(self, symbol: str, quoteOrderQty: int, recvWindow: int = 59990) -> PlaceOrderMarketBuy:
         data = await self.client.order_market_buy(symbol=symbol, quoteOrderQty=quoteOrderQty, recvWindow=recvWindow)
         return PlaceOrderMarketBuy.parse_obj(data)
+    
+    
 
     async def get_exchange_info(self) -> ExchangeInfo:
         data = await self.client.get_exchange_info()
         return ExchangeInfo.parse_obj(data)
 
-
+    async def order_market_sell(self, symbol: str, quantity: int, recvWindow: int = 59990) -> PlaceOrderMarketSell:
+        data = await self.client.order_market_sell(symbol=symbol, quantity=quantity, recvWindow=recvWindow)
+        return PlaceOrderMarketSell.parse_obj(data)
     
 
     
@@ -56,16 +60,14 @@ class BinanceAccount:
 
 if __name__ == '__main__':
     import asyncio
+    from dependencies import get_dependency
     
     from .config import get_config
 
     loop = asyncio.get_event_loop()
 
     async def main():
-
-        cfg = get_config()
-        account = BinanceAccount(cfg.public_api, cfg.private_api)
-        await account.create()
+        account = await get_dependency(BinanceAccount)
 
         await account.get_exchange_info()
 

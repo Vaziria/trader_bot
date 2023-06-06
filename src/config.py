@@ -17,6 +17,11 @@ class Config(BaseModel):
     public_api: str = ""
     private_api: str = ""
 
+    @classmethod
+    async def create(cls):
+        cfg = get_config()
+        return cfg
+
 
 
 def get_config() -> Config:

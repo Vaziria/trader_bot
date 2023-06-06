@@ -75,3 +75,6 @@ class OrderFull(BaseModel):
 
 class PlaceOrderMarketBuy(BaseModel):
     orderId: int
+
+class PlaceOrderMarketSell(BaseModel):
+    orderId: int

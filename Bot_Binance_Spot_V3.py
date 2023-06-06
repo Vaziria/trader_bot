@@ -241,8 +241,8 @@ class Botser:
         for symbol in self.bought:
             curPrice = self.getTickerPrice(symbol)
             if curPrice > 0:
-                sPrice = self.bought[symbol][0] + (self.bought[symbol][0] * (self.tp if not self.nextTP else self.nextTP) / 100)
-                sPrice = self.precision(sPrice, self.priceFilter[symbol])
+                sPrice = self.bought[symbol][0] + (self.bought[symbol][0] * (self.tp if not self.nextTP else self.nextTP) / 100) # trade price
+                sPrice = self.precision(sPrice, self.priceFilter[symbol]) # data sprice
                 # log(f'{symbol}: {curPrice} | SELL = {sPrice}')
                 if curPrice >= sPrice:
 
