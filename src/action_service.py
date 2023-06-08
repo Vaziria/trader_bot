@@ -5,7 +5,7 @@ from .binance_account import BinanceAccount
 from .config import Config
 from .models.binance_model import *
 from .models.exchange_model import *
-from .storages.order_storage import OrderStorage
+from .storages.order_storage import OrderStorage, OrderNotFound
 from .helper import cache_time_func
 from .dependencies import get_dependency
 
@@ -42,11 +42,13 @@ class ActionService:
     config: Config
     balance: Balance
     order_storage: OrderStorage
+    orderlock: asyncio.Lock
 
     # untuk dependendcy injection biar lebih enak buat aplikasinya
     @classmethod
     async def create(cls):
         obj: ActionService = cls()
+        obj.orderlock = asyncio.Lock()
         obj.client = await get_dependency(BinanceAccount)
         obj.config = await get_dependency(Config)
         obj.balance = await get_dependency(Balance)
@@ -67,20 +69,28 @@ class ActionService:
 
 
     async def place_buy(self, symbol: str) -> Order:
-        orders = await self.client.get_open_orders(symbol)
-        if len(orders) > 0:
-            raise SymbolHaveOrderException(f"{symbol} have order")
-        
-        await self.balance.refresh_balance(symbol[-4:])
-        placeord = await self.client.order_market_buy(symbol=symbol, quoteOrderQty=self.config.amount)
-        logger.info(f"[ {symbol} ] place order buy {placeord.orderId}")
+        async with self.orderlock:
+            try:
+                await self.order_storage.get(symbol)
+                raise SymbolHaveOrderException("event dobel")
+            except OrderNotFound:
+                pass
 
-        orderfilled = await self.wait_filled(symbol, placeord.orderId)
-        await self.order_storage.add(orderfilled)
+            orders = await self.client.get_open_orders(symbol)
+            if len(orders) > 0:
+                raise SymbolHaveOrderException(f"{symbol} have order")
+            
+            await self.balance.refresh_balance(symbol[-4:])
+            placeord = await self.client.order_market_buy(symbol=symbol, quoteOrderQty=self.config.amount)
+            logger.info(f"[ {symbol} ] place order buy {placeord.orderId}")
+            
 
-        logger.info(f"[ {symbol} ] order buy {placeord.orderId} FILLED")
+            orderfilled = await self.wait_filled(symbol, placeord.orderId)
+            await self.order_storage.add(orderfilled)
 
-        return orderfilled
+            logger.info(f"[ {symbol} ] order buy {placeord.orderId} FILLED")
+
+            return orderfilled
     
     async def place_sell(self, symbol: str) -> Order:
         exchange_info = await self.get_exchange_info()
