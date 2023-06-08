@@ -29,6 +29,9 @@ class LotSizeFilter(SymbolFilter):
     maxQty: float
     stepSize: float
 
+    def precision(self, amount):
+        return round(int(amount / self.stepSize) * self.stepSize, 8)
+
 class MinNotional(SymbolFilter):
     filterType: str = MIN_NOTIONAL_TYPE
     minNotional: float

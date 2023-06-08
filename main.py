@@ -15,7 +15,7 @@ if __name__ == "__main__":
             app=fastapp,
             loop=loop,
             host="0.0.0.0",
-            port=5000, 
+            port=80, 
             log_level="info"
         )
         server = Server(uvconfig)

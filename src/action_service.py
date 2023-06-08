@@ -68,7 +68,7 @@ class ActionService:
 
     async def place_buy(self, symbol: str) -> Order:
         orders = await self.client.get_open_orders(symbol)
-        if orders > 0:
+        if len(orders) > 0:
             raise SymbolHaveOrderException(f"{symbol} have order")
         
         await self.balance.refresh_balance(symbol[-4:])
@@ -83,9 +83,15 @@ class ActionService:
         return orderfilled
     
     async def place_sell(self, symbol: str) -> Order:
+        exchange_info = await self.get_exchange_info()
+        ex_symbol = exchange_info.get_symbol(symbol)
+        filtersym: LotSizeFilter = ex_symbol.get_filter(LOT_SIZE_TYPE)
+
+        balance = await self.balance.refresh_balance(symbol[:-4])
+        qty = filtersym.precision(balance.free)
         
         buyorder = await self.order_storage.get(symbol)
-        qty = buyorder.origQty
+        # qty = buyorder.origQty
         placeord = await self.client.order_market_sell(symbol, qty)
         logger.info(f"[ {symbol} ] place order {placeord.orderId}")
 

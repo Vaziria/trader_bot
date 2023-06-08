@@ -30,7 +30,7 @@ class OrderStorage:
         logger.info(f"order list on {fname}")
 
     def dict(self):
-        datas = list(map(lambda x: x.dict(), self.datas))
+        datas = list(map(lambda x: x.dict(), self.data))
         return datas
 
     async def load(self):
@@ -61,7 +61,7 @@ class OrderStorage:
         raise OrderNotFound(f"order {symbol} not found")
 
     async def remove(self, orderid: int):
-        with self.lock:
+        async with self.lock:
             self.data = list(filter(lambda x: x.orderId != orderid, self.data))
             await self.save()
 
