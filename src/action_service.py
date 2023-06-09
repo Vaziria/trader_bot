@@ -70,11 +70,9 @@ class ActionService:
 
     async def place_buy(self, symbol: str) -> Order:
         async with self.orderlock:
-            try:
-                await self.order_storage.get(symbol)
+            orders = await self.client.get_open_orders(symbol)
+            if len(orders) >0:
                 raise SymbolHaveOrderException("event dobel")
-            except OrderNotFound:
-                pass
 
             orders = await self.client.get_open_orders(symbol)
             if len(orders) > 0:
