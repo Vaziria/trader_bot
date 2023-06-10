@@ -14,12 +14,13 @@ class BinanceAccount:
     @classmethod
     async def create(cls):
         cfg = await get_dependency(Config)
-        obj: BinanceAccount = cls()
+        obj: BinanceAccount = BinanceAccount()
         obj.client = await AsyncClient.create(cfg.public_api, cfg.private_api)
         return obj
 
     async def get_open_orders(self, symbol: str, recvWindow: int=59990) -> List[Order]:
         data = await self.client.get_open_orders(symbol =symbol, recvWindow=recvWindow)
+        print(data)
         return parse_obj_as(List[Order], data)
 
     async def get_asset_balance(self, asset: str, recvWindow: int=59990) -> AssetBalance:

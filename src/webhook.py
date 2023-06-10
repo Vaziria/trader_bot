@@ -1,9 +1,8 @@
 import asyncio
 
 from pydantic import BaseModel
-from fastapi import HTTPException
+from fastapi import HTTPException, APIRouter
 
-from .app import fastapp
 from .config import Config
 from .logger import create_logger
 from .dependencies import get_dependency
@@ -30,8 +29,9 @@ def task_error_handler(task: asyncio.Task):
         logger.error(task.exception(), exc_info=True)
     
 
+webhookrouter = APIRouter()
 
-@fastapp.post("/webhook")
+@webhookrouter.post("/webhook")
 async def webhook(event: Event) -> HookResponse:
     config: Config = await get_dependency(Config)
     action: ActionService = await get_dependency(ActionService)
@@ -62,7 +62,7 @@ async def webhook(event: Event) -> HookResponse:
 
 c = 0
 
-@fastapp.post("/test")
+@webhookrouter.post("/test")
 async def webhook(event: Event):
     logger.info(event)
     loop = asyncio.get_event_loop()
